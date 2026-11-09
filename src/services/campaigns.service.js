@@ -1,6 +1,7 @@
-const { Campaign, Subscriber, Delivery } = require('../models');
-const mailer = require('./mailer');
+const { Campaign, Delivery } = require('../models');
 const { NotFoundError, ConflictError } = require('../utils/errors');
+const campaignPublish = require('../rabbitmq/campaign.publisher')
+const campaignWorker = require("../rabbitmq/campaign.consumer");
 
 async function findCampaign(id) {
   const campaign = await Campaign.findByPk(id);
@@ -21,20 +22,11 @@ async function createCampaign(fields) {
 
 async function sendCampaign(id) {
   const campaign = await findCampaign(id);
-  if (campaign.status === 'sent') throw new ConflictError(`Campaign ${id} has already been sent`);
+  if (campaign.status === 'completed') throw new ConflictError(`Campaign ${id} has already been completed`);
+  if (campaign.status !== 'draft') throw new ConflictError(`Campaign ${id} has already been sent`);
 
-  const subscribers = await Subscriber.findAll({ order: [['id', 'ASC']] });
+  await campaignPublish(JSON.stringify(campaign));
 
-  for (const subscriber of subscribers) {
-    await mailer.send({
-      to: subscriber.email,
-      subject: campaign.subject,
-      text: `Hi ${subscriber.name},\n\n${campaign.body}`,
-    });
-    await Delivery.create({ campaignId: campaign.id, subscriberId: subscriber.id });
-  }
-
-  await campaign.update({ status: 'sent', sentAt: new Date() });
   return getCampaign(id);
 }
 

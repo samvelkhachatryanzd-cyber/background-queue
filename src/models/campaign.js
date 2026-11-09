@@ -7,6 +7,7 @@ module.exports = (sequelize, DataTypes) => {
       body: { type: DataTypes.TEXT, allowNull: false },
       status: { type: DataTypes.STRING(20), allowNull: false, defaultValue: 'draft' },
       sentAt: { type: DataTypes.DATE, allowNull: true },
+      failureMessage: { type: DataTypes.TEXT, allowNull: true, defaultValue: null },
     },
     { tableName: 'campaigns', underscored: true }
   );

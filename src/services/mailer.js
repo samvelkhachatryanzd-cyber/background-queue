@@ -10,7 +10,11 @@ const delayMs = Number(process.env.MAIL_DELAY_MS) || 0;
 
 async function send({ to, subject, text }) {
   if (delayMs > 0) await new Promise((resolve) => setTimeout(resolve, delayMs));
-  await transport.sendMail({ from: process.env.MAIL_FROM, to, subject, text });
+  try {
+    await transport.sendMail({ from: process.env.MAIL_FROM, to, subject, text });
+  } catch (error) {
+    throw error;
+  }
 }
 
 module.exports = { send };

@@ -3,6 +3,7 @@ const express = require('express');
 const { sequelize } = require('./models');
 const router = require('./router');
 const { notFound, errorHandler } = require('./middleware/errorHandler');
+const campaignWorker = require("./rabbitmq/campaign.consumer");
 
 const app = express();
 app.use(express.json());
@@ -15,6 +16,10 @@ app.get('/health', async (req, res) => {
 app.use('/api', router);
 app.use(notFound);
 app.use(errorHandler);
+
+campaignWorker().then().catch((err) => {
+  console.log(err);
+});
 
 const port = Number(process.env.PORT) || 4000;
 
